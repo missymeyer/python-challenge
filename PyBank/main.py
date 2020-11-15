@@ -1,67 +1,64 @@
-#import budget data 
+  
+#Dependencies
+import csv
 import os
-import csv 
 
-#working directory
-csvpath=os.path.join('..','PyBank','Resources','budget_data.csv')
-with open(csvpath, newline='') as csvfile:
-    csvreader = csv.reader(csvfile, delimiter=',')
-    print(csvreader)
-    csv_header = next(csvreader)
-    month = []
-    revenue = []
-    revenue_change = []
-    monthly_change = []
-    
-    print(f"Header: {csv_header}")               
+#files I need to load
+cvspath = os.path.join("PyBank","Resources", "budget_data.csv")
+pathout = os.path.join("pyBank","Analysis", "budget_analysis.txt")
 
-#Months       
-    for row in csvreader:
-        month.append(row[0])
-        revenue.append(row[1])
-    print(len(month))
- #Revenue 
-    revenue_int = map(int,revenue)
-    total_revenue = (sum(revenue_int))
-    print(total_revenue)
+#variables i need to work with
 
- #Avg Change
-    i = 0
-    for i in range(len(revenue) - 1):
-        profit_loss = int(revenue[i+1]) - int(revenue[i])
- # append profit_loss
-        revenue_change.append(profit_loss)
-    Total = sum(revenue_change)
-    #print(revenue_change)
-    monthly_change = Total / len(revenue_change)
-    print(monthly_change)
-    #print(Total)
-    
-#Greatest Increase
-    profit_increase = max(revenue_change)
-    print(profit_increase)
-    k = revenue_change.index(profit_increase)
-    month_increase = month[k+1]
-    
-#Greatest Decrease
-    profit_decrease = min(revenue_change)
-    print(profit_decrease)
-    j = revenue_change.index(profit_decrease)
-    month_decrease = month[j+1]
+#total month needs to be set to 0 so I can count 
+totalMonth = 0
+totalRevenue = 0
+previousRevenue = 0
+revenue_change = 0
+revenue_change_list = []
+month_of_change = []
+greatestIncrease = ["", 0]
+greatestDecrease = ["", 99999999999]
+
+#Read the budget_data.csv file
+with open(cvspath) as revenueData:
+   reader = csv.DictReader(revenueData)
+
+#I need to loop through the data to collect the answers
+   for row in reader:
+
+       #Totaling
+           totalMonth = totalMonth + 1
+           totalRevenue = totalRevenue + int(row["Revenue"])
+
+#changes of revenue calculations
+           revenue_change = int(row["Revenue"]) - previousRevenue
+           previousRevenue = int(row["Revenue"])
+           month_of_change = month_of_change + [row["Date"]]
+
+           #Greatest Increase value
+           if (revenue_change > greatestIncrease[1]):
+               greatestIncrease[1] = revenue_change
+               greatestIncrease[0] = row["Date"]
+
+           if (revenue_change < greatestDecrease[1]):
+               greatestDecrease[0] = row["Date"]
+               greatestDecrease[1] = revenue_change
+        
+# calculate the average revenue outside of the loop
+revenue_avg = sum(revenue_change_list) / len(revenue_change_list)
 
 
-#Print Statements
+#print the outcomes
+output = (
+    f"Total Months: {totalMonth}\n"
+    f"Total Revenue: {totalRevenue}\n"
+    f"Average Revenue Change: ${revenue_avg}\n"
+    f"Greatest increase in Revenue: {greatestIncrease[0]} ${greatestIncrease[1]}\n"
+    f"Greatest decrease in Revenue: {greatestDecrease[0]} ${greatestDecrease[1]}\n"
+)
 
-print(f'Financial Analysis'+'\n')
-print(f'----------------------------'+'\n')
+print(output)
 
-
-print("Total number of months: " + str(len(month)))
-
-print("Total Revenue in period: $ " + str(total_revenue))
-      
-print("Average monthly change in Revenue : $" + str(monthly_change))
-
-print(f"Greatest Increase in Profits: {month_increase} (${profit_increase})")
-
-print(f"Greatest Decrease in Profits: {month_decrease} (${profit_decrease})")
+#Write to the text path
+with open(pathout, "w") as txt_file:
+    txt_file.write(output)
