@@ -1,64 +1,79 @@
-  
-#Dependencies
-import csv
+ # Import modules 
 import os
+import csv
 
-#files I need to load
-cvspath = os.path.join("PyBank","Resources", "budget_data.csv")
-pathout = os.path.join("pyBank","Analysis", "budget_analysis.txt")
+# Define variables
+month_count = 0
+date_list = []
+profit_l_list = []
+total_p_l = float(0)
+change_value_list = []
+prior_value = float(0)
 
-#variables i need to work with
+# Define path to budget data csv
+csvpath = os.path.join('..', 'PyBank','Resources', 'budget_data.csv')
 
-#total month needs to be set to 0 so I can count 
-totalMonth = 0
-totalRevenue = 0
-previousRevenue = 0
-revenue_change = 0
-revenue_change_list = []
-month_of_change = []
-greatestIncrease = ["", 0]
-greatestDecrease = ["", 99999999999]
+# Open csv
+with open(csvpath, 'r', newline='') as csvfile:
 
-#Read the budget_data.csv file
-with open(cvspath) as revenueData:
-   reader = csv.DictReader(revenueData)
+# Define csv_reader
+    csv_reader = csv.reader(csvfile, delimiter=',')
 
-#I need to loop through the data to collect the answers
-   for row in reader:
+# Identify header of the csv file and skip over it
+    csv_header = next(csv_reader)
 
-       #Totaling
-           totalMonth = totalMonth + 1
-           totalRevenue = totalRevenue + int(row["Revenue"])
+# Loop through the dataset to count months and add to list of dates and profit/loss values
+    for value in csv_reader:
+        month_count += 1
+        date_list.append(str(value[0]))
+        profit_l_list.append(float(value[1]))
 
-#changes of revenue calculations
-           revenue_change = int(row["Revenue"]) - previousRevenue
-           previousRevenue = int(row["Revenue"])
-           month_of_change = month_of_change + [row["Date"]]
-
-           #Greatest Increase value
-           if (revenue_change > greatestIncrease[1]):
-               greatestIncrease[1] = revenue_change
-               greatestIncrease[0] = row["Date"]
-
-           if (revenue_change < greatestDecrease[1]):
-               greatestDecrease[0] = row["Date"]
-               greatestDecrease[1] = revenue_change
+    # Create list of profit/loss changes month-to-month
+        current_value = value[1]
+        change_value = float(current_value) - float(prior_value)
+        change_value_list.append(change_value)
+        prior_value = current_value
         
-# calculate the average revenue outside of the loop
-revenue_avg = sum(revenue_change_list) / len(revenue_change_list)
 
+# Define function to calc avg change in profit/loss between months
+def average(change_value_list):
+    x = len(change_value_list)
+    total = sum(change_value_list) - change_value_list[0]
+    avg = total / (x - 1)
+    return avg
 
-#print the outcomes
-output = (
-    f"Total Months: {totalMonth}\n"
-    f"Total Revenue: {totalRevenue}\n"
-    f"Average Revenue Change: ${revenue_avg}\n"
-    f"Greatest increase in Revenue: {greatestIncrease[0]} ${greatestIncrease[1]}\n"
-    f"Greatest decrease in Revenue: {greatestDecrease[0]} ${greatestDecrease[1]}\n"
-)
+# Calc avg change
+average_change = round(average(change_value_list), 2)
 
-print(output)
+# Calc total profit/loss 
+total_p_l = round(sum(profit_l_list))
 
-#Write to the text path
-with open(pathout, "w") as txt_file:
-    txt_file.write(output)
+# Match dates with the highest and lowest profit/loss values
+highest_p_l = round(max(profit_l_list))
+lowest_p_l = round(min(profit_l_list))
+highest_index = profit_l_list.index(highest_p_l)
+lowest_index = profit_l_list.index(lowest_p_l)
+
+# Display output via terminal screen   
+print("------------------------------")
+print("Financial Analysis")
+print("------------------------------")
+print(f"Total Months: {month_count}")
+print(f"Total: ${total_p_l}")
+print(f"Average Change: ${average_change}")
+print(f"Greatest Increase in Profits: {date_list[highest_index]} (${highest_p_l})")
+print(f"Greatest Decrease in Profits: {date_list[lowest_index]} (${lowest_p_l})")
+
+# Create output path
+output_path = os.path.join('..', 'PyBank','Analysis',"Financial_Analysis.txt")
+with open(output_path, 'w', newline='') as text_file:
+
+# Write the report to a text file within the Output folder
+    print('-----------------------------', file=text_file)
+    print("Financial Analysis", file=text_file)
+    print('-----------------------------', file=text_file)
+    print(f"Total Months: {month_count}", file=text_file)
+    print(f"Total: ${total_p_l}", file=text_file)
+    print(f"Average Change: ${average_change}", file=text_file)
+    print(f"Greatest Increase in Profits: {date_list[highest_index]} (${highest_p_l})", file=text_file)
+    print(f"Greatest Decrease in Profits: {date_list[lowest_index]} (${lowest_p_l})",file=text_file)
